@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>スカイダイビング×秩父キャンプ しおり</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root{
+    --sky:#4A8FC4;
+    --sky-deep:#1F5C8E;
+    --sky-pale:#EAF3FB;
+    --forest:#3F6B4F;
+    --forest-deep:#274734;
+    --river:#6FB8B0;
+    --river-pale:#E4F4F1;
+    --sun:#E8934A;
+    --sun-deep:#B9631E;
+    --paper:#FAF6ED;
+    --paper-card:#FFFFFF;
+    --ink:#3A2E22;
+    --ink-soft:#6B5D4C;
+    --line:#DDD4C0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:#E9E2D0;
+    font-family:'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:32px 12px;
+  }
+  .book{
+    width:100%;
+    max-width:760px;
+    background:var(--paper);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 8px 30px rgba(0,0,0,0.12);
+  }
+  header.cover{
+    background:linear-gradient(180deg, var(--sky-deep) 0%, var(--sky) 55%, var(--forest) 100%);
+    color:#fff;
+    padding:52px 40px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.cover::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:60px;
+    background:radial-gradient(120% 200% at 20% 100%, var(--forest-deep) 0%, transparent 60%),
+               radial-gradient(120% 200% at 80% 100%, var(--forest) 0%, transparent 60%);
+  }
+  .eyebrow{
+    font-size:13px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    opacity:0.85;
+    margin:0 0 10px;
+  }
+  h1.title{
+    font-family:'Kaisei Decol', serif;
+    font-size:34px;
+    line-height:1.4;
+    margin:0 0 18px;
+    font-weight:400;
+  }
+  .cover-meta{
+    display:flex;
+    gap:28px;
+    flex-wrap:wrap;
+    font-size:14px;
+    position:relative;
+    z-index:2;
+  }
+  .cover-meta div{opacity:0.95;}
+  .cover-meta b{display:block; font-size:16px; font-weight:700; margin-top:2px;}
+
+  section{padding:34px 40px;}
+  section + section{border-top:1px dashed var(--line);}
+
+  h2.section-title{
+    font-family:'Kaisei Decol', serif;
+    font-size:21px;
+    font-weight:400;
+    color:var(--forest-deep);
+    margin:0 0 20px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  h2.section-title .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--sun);
+    flex-shrink:0;
+  }
+
+  .overview-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .ov-card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .ov-card .label{font-size:12px; color:var(--ink-soft); margin:0 0 6px;}
+  .ov-card .value{font-size:15px; font-weight:700; margin:0; line-height:1.5;}
+  .ov-card .sub{font-size:12px; color:var(--ink-soft); margin:4px 0 0;}
+
+  .day{
+    display:grid;
+    grid-template-columns:64px 1fr;
+    gap:16px;
+    margin-bottom:26px;
+  }
+  .day:last-child{margin-bottom:0;}
+  .day-badge{
+    text-align:center;
+  }
+  .day-badge .num{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:52px; height:52px;
+    border-radius:50%;
+    background:var(--sky-pale);
+    color:var(--sky-deep);
+    font-weight:900;
+    font-size:15px;
+    margin:0 auto 4px;
+  }
+  .day-badge .dow{font-size:11px; color:var(--ink-soft);}
+  .day-body{
+    border-left:2px solid var(--line);
+    padding-left:16px;
+  }
+  .day-date{font-size:13px; color:var(--ink-soft); margin:2px 0 10px; font-weight:700;}
+  .event{
+    display:flex;
+    gap:12px;
+    padding:10px 14px;
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:8px;
+    align-items:flex-start;
+  }
+  .event:last-child{margin-bottom:0;}
+  .event .time{
+    font-size:12px;
+    font-weight:700;
+    color:var(--sun-deep);
+    white-space:nowrap;
+    min-width:78px;
+  }
+  .event .desc{font-size:14px; line-height:1.55;}
+  .event .desc .note{display:block; font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .tag{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:999px;
+    margin-right:6px;
+  }
+  .tag.sky{background:var(--sky-pale); color:var(--sky-deep);}
+  .tag.river{background:var(--river-pale); color:#2C6E64;}
+  .tag.forest{background:#E7F0E5; color:var(--forest-deep);}
+
+  table.cost{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+    margin-bottom:24px;
+  }
+  table.cost:last-of-type{margin-bottom:0;}
+  .cost-subhead{
+    font-size:13px;
+    font-weight:700;
+    color:var(--forest-deep);
+    margin:0 0 10px;
+  }
+  .pay{
+    display:inline-block;
+    font-size:10.5px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .pay.paid{background:var(--river-pale); color:#2C6E64;}
+  .pay.local{background:#FBEEDD; color:var(--sun-deep);}
+  .pay.pending{background:#F1EFE8; color:var(--ink-soft);}
+  table.cost th{
+    text-align:left;
+    font-size:12px;
+    color:var(--ink-soft);
+    font-weight:700;
+    padding:0 0 8px;
+    border-bottom:1px solid var(--line);
+  }
+  table.cost td{
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+  }
+  table.cost td.amt{text-align:right; font-weight:700; font-variant-numeric:tabular-nums;}
+  table.cost tr.total td{
+    border-bottom:none;
+    padding-top:14px;
+    font-size:16px;
+    font-weight:900;
+    color:var(--sun-deep);
+  }
+
+  .checklist{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px 20px;
+  }
+  .check-group{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .check-group h3{
+    font-size:13px;
+    margin:0 0 8px;
+    color:var(--forest-deep);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .check-group ul{
+    margin:0; padding:0;
+    list-style:none;
+  }
+  .check-group li{
+    font-size:13px;
+    padding:4px 0 4px 20px;
+    position:relative;
+    line-height:1.5;
+  }
+  .check-group li::before{
+    content:"";
+    position:absolute;
+    left:0; top:9px;
+    width:10px; height:10px;
+    border:1.5px solid var(--sky);
+    border-radius:3px;
+  }
+
+  .tl-day{margin-bottom:32px;}
+  .tl-day:last-child{margin-bottom:0;}
+  .tl-day-header{display:flex; align-items:baseline; gap:10px; margin-bottom:10px;}
+  .tl-day-header .tl-day-num{font-family:'Kaisei Decol', serif; font-size:16px; color:var(--forest-deep);}
+  .tl-day-header .tl-day-date{font-size:12px; color:var(--ink-soft);}
+  .tl-allday{
+    margin:0 0 10px 60px;
+    background:#E7F0E5;
+    color:var(--forest-deep);
+    font-size:12px;
+    font-weight:700;
+    padding:5px 10px;
+    border-radius:8px;
+    border:1px solid var(--forest);
+    display:inline-block;
+  }
+  .tl-wrap{position:relative; padding-left:60px;}
+  .tl-hourlabels{position:absolute; left:0; top:0; width:52px;}
+  .tl-hourlabel{
+    position:absolute;
+    left:0; right:8px;
+    font-size:11px;
+    color:var(--ink-soft);
+    transform:translateY(-6px);
+    text-align:right;
+  }
+  .tl-grid{position:relative; border-left:1px solid var(--line);}
+  .tl-gridline{position:absolute; left:0; right:0; border-top:1px solid var(--line);}
+  .tl-event{
+    position:absolute;
+    left:6px; right:6px;
+    border-radius:8px;
+    border:1px solid;
+    padding:5px 10px;
+    overflow:hidden;
+  }
+  .tl-event .tl-time{display:block; font-size:10.5px; font-weight:700;}
+  .tl-event .tl-title{display:block; font-size:12.5px; font-weight:500; line-height:1.35;}
+  .tl-event .tl-note{display:block; font-size:10px; opacity:0.85; margin-top:2px; line-height:1.3;}
+  .tl-event.sky{background:var(--sky-pale); color:var(--sky-deep); border-color:var(--sky);}
+  .tl-event.river{background:var(--river-pale); color:#2C6E64; border-color:#4C9A90;}
+  .tl-event.forest{background:#E7F0E5; color:var(--forest-deep); border-color:var(--forest);}
+  .tl-event.move{background:#F3EEE3; color:var(--ink-soft); border-color:#C9BCA0;}
+
+  .tl-point{
+    position:absolute;
+    left:6px; right:6px;
+    height:22px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:11.5px;
+    padding:0 10px;
+    border-radius:6px;
+    border:1px solid;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .tl-point-dot{width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0;}
+  .tl-point b{font-weight:700;}
+  .tl-point.move{background:#F3EEE3; color:var(--ink-soft); border-color:#C9BCA0;}
+  .tl-point.forest{background:#E7F0E5; color:var(--forest-deep); border-color:var(--forest);}
+
+  .route-day{margin-bottom:22px;}
+  .route-day:last-child{margin-bottom:8px;}
+  .route-day h3{font-size:13px; margin:0 0 8px; color:var(--forest-deep);}
+  .route-list{list-style:none; margin:0; padding:0;}
+  .route-item{
+    font-size:13px;
+    padding:7px 0 7px 18px;
+    border-bottom:1px dashed var(--line);
+    line-height:1.6;
+    position:relative;
+  }
+  .route-item:last-child{border-bottom:none;}
+  .route-item::before{
+    content:"";
+    position:absolute;
+    left:0; top:14px;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--sky);
+  }
+  .route-item b{color:var(--sun-deep);}
+  .route-item.route-arrow{
+    font-size:12px;
+    color:var(--ink-soft);
+    padding-left:18px;
+  }
+  .route-item.route-arrow::before{
+    background:transparent;
+    border-left:1px dashed var(--ink-soft);
+    width:0; height:16px;
+    border-radius:0;
+    top:0;
+  }
+  .route-caveat{font-size:11.5px; color:var(--ink-soft); margin:10px 0 8px;}
+  .map-link{
+    display:inline-block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--sky-deep);
+    background:var(--sky-pale);
+    border:1px solid var(--sky);
+    padding:8px 16px;
+    border-radius:999px;
+    text-decoration:none;
+  }
+
+  .notes{
+    background:var(--river-pale);
+    border-radius:12px;
+    padding:16px 18px;
+  }
+  .notes ul{margin:0; padding-left:18px; font-size:13.5px; line-height:1.8;}
+  .notes li b{color:var(--forest-deep);}
+
+  footer{
+    padding:26px 40px 34px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12px;
+  }
+
+  @media (max-width:520px){
+    .overview-grid, .checklist{grid-template-columns:1fr;}
+    section{padding:26px 22px;}
+    header.cover{padding:40px 22px 32px;}
+    h1.title{font-size:26px;}
+    table.cost{font-size:12px;}
+    .pay{font-size:9.5px; padding:2px 6px; white-space:normal;}
+  }
+</style>
+</head>
+<body>
+<div class="book">
+
+  <header class="cover">
+    <p class="eyebrow">Travel itinerary</p>
+    <h1 class="title">スカイダイビング×秩父<br>キャンプ旅行 しおり</h1>
+    <div class="cover-meta">
+      <div>日程<b>2026/8/7(金) ー 8/9(日)</b></div>
+      <div>メンバー<b>りお・とみたつ・ちっすー</b></div>
+    </div>
+  </header>
+
+  <section>
+    <h2 class="section-title"><span class="dot"></span>日程表</h2>
+
+    <div class="ov-card" style="margin-bottom:22px;">
+      <p class="label">レンタカー（保険としての仮予約）</p>
+      <p class="value">ニコニコレンタカー 川崎宿河原店</p>
+      <p class="sub">8/7 9:00〜8/9 16:00（55時間）／Sクラス：ノートe-POWER／禁煙車／22,545円（補償制度加入済み）</p>
+      <p class="sub">※カーシェアが取れなかった時の保険として予約。7/28(火)頃までに本予約か予約キャンセルか判断する</p>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-day-header"><span class="tl-day-num">Day1</span><span class="tl-day-date">8/7（金）</span></div>
+      <div class="tl-wrap">
+        <div class="tl-hourlabels">
+          <span class="tl-hourlabel" style="top:0px;">9:00</span>
+          <span class="tl-hourlabel" style="top:48px;">10:00</span>
+          <span class="tl-hourlabel" style="top:96px;">11:00</span>
+          <span class="tl-hourlabel" style="top:144px;">12:00</span>
+          <span class="tl-hourlabel" style="top:192px;">13:00</span>
+          <span class="tl-hourlabel" style="top:240px;">14:00</span>
+          <span class="tl-hourlabel" style="top:288px;">15:00</span>
+          <span class="tl-hourlabel" style="top:336px;">16:00</span>
+          <span class="tl-hourlabel" style="top:384px;">17:00</span>
+          <span class="tl-hourlabel" style="top:432px;">18:00</span>
+          <span class="tl-hourlabel" style="top:480px;">19:00</span>
+          <span class="tl-hourlabel" style="top:528px;">20:00</span>
+          <span class="tl-hourlabel" style="top:576px;">21:00</span>
+          <span class="tl-hourlabel" style="top:624px;">22:00</span>
+        </div>
+        <div class="tl-grid" style="height:624px;">
+          <div class="tl-gridline" style="top:0px;"></div>
+          <div class="tl-gridline" style="top:48px;"></div>
+          <div class="tl-gridline" style="top:96px;"></div>
+          <div class="tl-gridline" style="top:144px;"></div>
+          <div class="tl-gridline" style="top:192px;"></div>
+          <div class="tl-gridline" style="top:240px;"></div>
+          <div class="tl-gridline" style="top:288px;"></div>
+          <div class="tl-gridline" style="top:336px;"></div>
+          <div class="tl-gridline" style="top:384px;"></div>
+          <div class="tl-gridline" style="top:432px;"></div>
+          <div class="tl-gridline" style="top:480px;"></div>
+          <div class="tl-gridline" style="top:528px;"></div>
+          <div class="tl-gridline" style="top:576px;"></div>
+          <div class="tl-gridline" style="top:624px;"></div>
+          <div class="tl-point move" style="top:0px;">
+            <span class="tl-point-dot"></span>
+            <span class="tl-point-text"><b>9:00</b>　宿河原（ニコニコレンタカー）出発</span>
+          </div>
+          <div class="tl-event move" style="top:24px; height:72px;">
+            <span class="tl-time">9:30–11:00（目安）</span>
+            <span class="tl-title">移動：宿河原 → 北秋川　車で約1.5時間</span>
+          </div>
+          <div class="tl-event river" style="top:168px; height:168px;">
+            <span class="tl-time">12:30–16:00</span>
+            <span class="tl-title">川サウナ（北秋川／サウナパラダイス）</span>
+            <span class="tl-note">予約・支払済み（3名で25,000円）</span>
+          </div>
+          <div class="tl-event move" style="top:336px; height:72px;">
+            <span class="tl-time">16:00–17:30（目安）</span>
+            <span class="tl-title">移動：北秋川 → ぴか秩父　車で約1.5時間</span>
+          </div>
+          <div class="tl-point forest" style="top:408px;">
+            <span class="tl-point-dot"></span>
+            <span class="tl-point-text"><b>17:30（目安）</b>　ぴか秩父 コテージ チェックイン</span>
+          </div>
+          <div class="tl-event forest" style="top:432px; height:144px;">
+            <span class="tl-time">18:00–21:00（目安）</span>
+            <span class="tl-title">BBQ（二食付きプラン）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-day-header"><span class="tl-day-num">Day2</span><span class="tl-day-date">8/8（土）</span></div>
+      <div class="tl-allday">終日：ぴか秩父 コテージ（2泊目）</div>
+      <div class="tl-wrap">
+        <div class="tl-hourlabels">
+          <span class="tl-hourlabel" style="top:0px;">9:00</span>
+          <span class="tl-hourlabel" style="top:48px;">10:00</span>
+          <span class="tl-hourlabel" style="top:96px;">11:00</span>
+          <span class="tl-hourlabel" style="top:144px;">12:00</span>
+          <span class="tl-hourlabel" style="top:192px;">13:00</span>
+          <span class="tl-hourlabel" style="top:240px;">14:00</span>
+          <span class="tl-hourlabel" style="top:288px;">15:00</span>
+          <span class="tl-hourlabel" style="top:336px;">16:00</span>
+          <span class="tl-hourlabel" style="top:384px;">17:00</span>
+          <span class="tl-hourlabel" style="top:432px;">18:00</span>
+          <span class="tl-hourlabel" style="top:480px;">19:00</span>
+          <span class="tl-hourlabel" style="top:528px;">20:00</span>
+          <span class="tl-hourlabel" style="top:576px;">21:00</span>
+          <span class="tl-hourlabel" style="top:624px;">22:00</span>
+        </div>
+        <div class="tl-grid" style="height:624px;">
+          <div class="tl-gridline" style="top:0px;"></div>
+          <div class="tl-gridline" style="top:48px;"></div>
+          <div class="tl-gridline" style="top:96px;"></div>
+          <div class="tl-gridline" style="top:144px;"></div>
+          <div class="tl-gridline" style="top:192px;"></div>
+          <div class="tl-gridline" style="top:240px;"></div>
+          <div class="tl-gridline" style="top:288px;"></div>
+          <div class="tl-gridline" style="top:336px;"></div>
+          <div class="tl-gridline" style="top:384px;"></div>
+          <div class="tl-gridline" style="top:432px;"></div>
+          <div class="tl-gridline" style="top:480px;"></div>
+          <div class="tl-gridline" style="top:528px;"></div>
+          <div class="tl-gridline" style="top:576px;"></div>
+          <div class="tl-gridline" style="top:624px;"></div>
+          <div class="tl-event move" style="top:48px; height:48px;">
+            <span class="tl-time">10:00–11:00（目安）</span>
+            <span class="tl-title">移動：ぴか秩父 → スカイダイビング会場　車で約1時間</span>
+          </div>
+          <div class="tl-event sky" style="top:144px; height:96px;">
+            <span class="tl-time">12:00–14:00（目安）</span>
+            <span class="tl-title">スカイダイビング（ハンドカメラ・コース）</span>
+            <span class="tl-note">集合：スカイダイブ・ニッポン／65,000円は当日現金払い</span>
+          </div>
+          <div class="tl-event move" style="top:240px; height:48px;">
+            <span class="tl-time">14:00–15:00（目安）</span>
+            <span class="tl-title">移動：スカイダイビング会場 → ぴか秩父　車で約1時間</span>
+          </div>
+          <div class="tl-event forest" style="top:432px; height:144px;">
+            <span class="tl-time">18:00–21:00（目安）</span>
+            <span class="tl-title">BBQ（二食付きプラン）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-day">
+      <div class="tl-day-header"><span class="tl-day-num">Day3</span><span class="tl-day-date">8/9（日）</span></div>
+      <div class="tl-wrap">
+        <div class="tl-hourlabels">
+          <span class="tl-hourlabel" style="top:0px;">9:00</span>
+          <span class="tl-hourlabel" style="top:48px;">10:00</span>
+          <span class="tl-hourlabel" style="top:96px;">11:00</span>
+          <span class="tl-hourlabel" style="top:144px;">12:00</span>
+          <span class="tl-hourlabel" style="top:192px;">13:00</span>
+          <span class="tl-hourlabel" style="top:240px;">14:00</span>
+          <span class="tl-hourlabel" style="top:288px;">15:00</span>
+          <span class="tl-hourlabel" style="top:336px;">16:00</span>
+          <span class="tl-hourlabel" style="top:384px;">17:00</span>
+        </div>
+        <div class="tl-grid" style="height:384px;">
+          <div class="tl-gridline" style="top:0px;"></div>
+          <div class="tl-gridline" style="top:48px;"></div>
+          <div class="tl-gridline" style="top:96px;"></div>
+          <div class="tl-gridline" style="top:144px;"></div>
+          <div class="tl-gridline" style="top:192px;"></div>
+          <div class="tl-gridline" style="top:240px;"></div>
+          <div class="tl-gridline" style="top:288px;"></div>
+          <div class="tl-gridline" style="top:336px;"></div>
+          <div class="tl-gridline" style="top:384px;"></div>
+          <div class="tl-event forest" style="top:48px; height:48px;">
+            <span class="tl-time">10:00–11:00（目安）</span>
+            <span class="tl-title">ぴか秩父 チェックアウト</span>
+          </div>
+          <div class="tl-event move" style="top:96px; height:96px;">
+            <span class="tl-time">11:00–13:00（目安）</span>
+            <span class="tl-title">移動：ぴか秩父 → 宿河原　車で約2時間</span>
+          </div>
+          <div class="tl-point move" style="top:336px;">
+            <span class="tl-point-dot"></span>
+            <span class="tl-point-text"><b>16:00</b>　ニコニコレンタカー 川崎宿河原店 返却（期限）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="route-caveat">※移動時間はおおよその目安。実際の道路状況により前後します。</p>
+  </section>
+
+  <section>
+    <h2 class="section-title"><span class="dot"></span>移動ルート</h2>
+
+    <p class="cost-subhead">実際の地図</p>
+    <div id="leaflet-map" style="height:420px; border-radius:12px; border:1px solid var(--line); margin-bottom:8px;"></div>
+    <p class="route-caveat">地図：OpenStreetMap／ルート計算：OSRM（読み込みに数秒かかる場合があります）</p>
+
+    <p class="cost-subhead" style="margin-top:22px;">移動フロー（時間の目安）</p>
+    <svg viewBox="0 0 680 590" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+      <line x1="24" y1="40" x2="24" y2="540" stroke="var(--line)" stroke-width="2"/>
+
+      <circle cx="24" cy="40" r="9" fill="var(--sun)" stroke="var(--paper)" stroke-width="2"/>
+      <text x="50" y="37" font-size="13" font-weight="700" fill="var(--ink)">宿河原（ニコニコレンタカー）出発</text>
+      <text x="50" y="55" font-size="11" fill="var(--ink-soft)">8/7（金） 9:00</text>
+
+      <rect x="34" y="72" width="150" height="20" rx="6" fill="#F3EEE3" stroke="#C9BCA0"/>
+      <text x="109" y="86" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">車で約1.5時間</text>
+
+      <circle cx="24" cy="140" r="9" fill="var(--river)" stroke="var(--paper)" stroke-width="2"/>
+      <text x="50" y="137" font-size="13" font-weight="700" fill="var(--ink)">川サウナ（北秋川）</text>
+      <text x="50" y="155" font-size="11" fill="var(--ink-soft)">8/7（金） 12:30〜16:00</text>
+
+      <rect x="34" y="172" width="150" height="20" rx="6" fill="#F3EEE3" stroke="#C9BCA0"/>
+      <text x="109" y="186" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">車で約1.5時間</text>
+
+      <circle cx="24" cy="240" r="9" fill="var(--forest)" stroke="var(--paper)" stroke-width="2"/>
+      <text x="50" y="237" font-size="13" font-weight="700" fill="var(--ink)">ぴか秩父（コテージ）</text>
+      <text x="50" y="255" font-size="11" fill="var(--ink-soft)">8/7（金） 17:30頃 到着・宿泊</text>
+
+      <rect x="34" y="272" width="150" height="20" rx="6" fill="#F3EEE3" stroke="#C9BCA0"/>
+      <text x="109" y="286" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">車で約1時間</text>
+
+      <circle cx="24" cy="340" r="9" fill="var(--sky)" stroke="var(--paper)" stroke-width="2"/>
+      <text x="50" y="337" font-size="13" font-weight="700" fill="var(--ink)">スカイダイブ・ニッポン（川島町）</text>
+      <text x="50" y="355" font-size="11" fill="var(--ink-soft)">8/8（土） 12:00 集合</text>
+
+      <rect x="34" y="372" width="150" height="20" rx="6" fill="#F3EEE3" stroke="#C9BCA0"/>
+      <text x="109" y="386" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">車で約1時間</text>
+
+      <circle cx="24" cy="440" r="9" fill="var(--forest)" stroke="var(--paper)" stroke-width="2"/>
+      <text x="50" y="437" font-size="13" font-weight="700" fill="var(--ink)">ぴか秩父（コテージ）</text>
+      <text x="50" y="455" font-size="11" fill="var(--ink-soft)">8/8（土） 15:00頃 帰着・2泊目</text>
+
+      <rect x="34" y="472" width="150" height="20" rx="6" fill="#F3EEE3" stroke="#C9BCA0"/>
+      <text x="109" y="486" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">車で約2時間</text>
+
+      <circle cx="24" cy="540" r="9" fill="var(--sun)" stroke="var(--paper)" stroke-width="2"/>
+      <text x="50" y="537" font-size="13" font-weight="700" fill="var(--ink)">宿河原（ニコニコレンタカー）返却</text>
+      <text x="50" y="555" font-size="11" fill="var(--ink-soft)">8/9（日） 16:00 返却期限</text>
+    </svg>
+    <p class="route-caveat">※実際の道のりを正確に表した地図ではなく、移動の流れと所要時間を示す模式図です。実際の道路や距離はこちらで確認できます↓</p>
+    <a class="map-link" href="https://www.google.com/maps/dir/?api=1&amp;origin=35.6161615,139.5829996&amp;destination=35.6161615,139.5829996&amp;waypoints=35.7358586,139.0916393%7C35.986136,139.047551%7C35.9777452,139.5113871%7C35.986136,139.047551&amp;travelmode=driving" target="_blank" rel="noopener">Googleマップで実際のルートを見る ↗</a>
+  </section>
+
+  <section>
+    <h2 class="section-title"><span class="dot"></span>費用</h2>
+
+    <p class="cost-subhead">グループ合計（3人）</p>
+    <table class="cost">
+      <tr><th>項目</th><th style="text-align:right;">金額</th><th>支払い状況</th></tr>
+      <tr><td>スカイダイビング（65,000円×3名）</td><td class="amt">¥195,000</td><td><span class="pay local">現地払い（当日現金）</span></td></tr>
+      <tr><td>ぴか秩父（宿泊・22,700円×3名）</td><td class="amt">¥68,100</td><td><span class="pay pending">支払い方法未確認</span></td></tr>
+      <tr><td>川サウナ（3名分）</td><td class="amt">¥25,000</td><td><span class="pay paid">支払い済み（カード）</span></td></tr>
+      <tr><td>レンタカー（保険予約）</td><td class="amt">¥22,545</td><td><span class="pay pending">未決済（7/28までに判断）</span></td></tr>
+      <tr><td>食費（10,000円×3名・目安）</td><td class="amt">¥30,000</td><td><span class="pay local">現地で精算（未定）</span></td></tr>
+      <tr class="total"><td>合計</td><td class="amt">¥340,645</td><td></td></tr>
+    </table>
+
+    <p class="cost-subhead">1人あたり</p>
+    <table class="cost">
+      <tr><th>項目</th><th style="text-align:right;">金額</th><th>支払い状況</th></tr>
+      <tr><td>スカイダイビング</td><td class="amt">¥65,000</td><td><span class="pay local">現地払い（当日現金）</span></td></tr>
+      <tr><td>ぴか秩父（宿泊）</td><td class="amt">¥22,700</td><td><span class="pay pending">支払い方法未確認</span></td></tr>
+      <tr><td>川サウナ（25,000円÷3名）</td><td class="amt">¥8,333</td><td><span class="pay paid">支払い済み（カード）</span></td></tr>
+      <tr><td>レンタカー（保険予約 22,545円÷3名・目安）</td><td class="amt">¥7,515</td><td><span class="pay pending">未決済（7/28までに判断）</span></td></tr>
+      <tr><td>食費</td><td class="amt">¥10,000</td><td><span class="pay local">現地で精算（未定）</span></td></tr>
+      <tr class="total"><td>合計</td><td class="amt">¥113,548</td><td></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2 class="section-title"><span class="dot"></span>川サウナ 予約詳細（サウナパラダイス）</h2>
+    <div class="checklist">
+      <div class="check-group">
+        <h3>予約概要</h3>
+        <ul>
+          <li>プラン：（平日の予約）関東／東京：川サウナFIELD 北秋川。北秋川の清流で日帰り川サウナ体験</li>
+          <li>予約日時：2026年08月07日(金) 12:30〜16:00</li>
+          <li>予約店舗：サウナパラダイス</li>
+          <li>お支払い方法：クレジットカード（25,000円）支払い済み</li>
+          <li>来場人数：3名</li>
+        </ul>
+      </div>
+      <div class="check-group">
+        <h3>アンケート回答</h3>
+        <ul>
+          <li>安心パック（5,000円）：不要</li>
+          <li>タープテント（4,000円）：不要</li>
+          <li>追加インフィニティチェア：不要</li>
+          <li>入場料1,100円/人・駐車場代1,100円/台（現地決済・現金）／サウナ用の薪・着火剤・チャッカマンは現地購入可：はい</li>
+          <li>ゴミ袋（施設指定、1枚100円）購入：はい</li>
+          <li>予約後1時間以内の公式LINE登録・連絡：承知しました</li>
+          <li>オプション振込（予約から3日以内）：承知しました</li>
+          <li>予約完了後の連絡方法：予約完了後、1時間以内に公式LINEから連絡する</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title"><span class="dot"></span>持ち物チェックリスト</h2>
+    <div class="checklist">
+      <div class="check-group">
+        <h3>持参必須</h3>
+        <ul>
+          <li>まな板</li>
+          <li>包丁</li>
+          <li>各自の水着・タオル（川サウナ用）</li>
+          <li>スカイダイビング申込に必要な各自の情報</li>
+        </ul>
+      </div>
+      <div class="check-group">
+        <h3>プランに含まれるもの</h3>
+        <ul>
+          <li>トング・お皿</li>
+          <li>あみ・炭</li>
+          <li>軍手</li>
+          <li>調味料</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title"><span class="dot"></span>メモ・確認事項</h2>
+    <div class="notes">
+      <ul>
+        <li><b>スカイダイビング：</b>当日撮影データはGoogle Driveにアップロード、保存期間は最短7日間なので早めにダウンロード</li>
+        <li><b>レンタカー予約：</b>7/17までに手配（リマインくんで設定済み）</li>
+        <li><b>レンタカー（保険予約）：</b>ニコニコレンタカー川崎宿河原店を仮予約中。カーシェアが取れなかった時の保険。7/28(火)頃までに本予約かキャンセルか判断</li>
+        <li><b>川サウナ：</b>4日前までキャンセル可能</li>
+        <li><b>川サウナ現地費用：</b>入場料1,100円/人・駐車場代1,100円/台・ゴミ袋100円/枚は現地決済（現金）</li>
+        <li><b>コテージのタイプ：</b>棟によってピザ窯の有無など設備が異なるので要確認</li>
+        <li><b>氷・飲み物・食材：</b>現地販売の有無、持ち込み可否は要確認</li>
+        <li><b>片付け：</b>ゴミの処理範囲・終了後の清掃ルールは要確認</li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var stops = [
+    {lat:35.6161615, lng:139.5829996, name:"宿河原（ニコニコレンタカー）出発", time:"8/7（金）9:00", color:"#B9631E"},
+    {lat:35.7358586, lng:139.0916393, name:"川サウナ（北秋川）", time:"8/7（金）12:30〜16:00", color:"#2C6E64"},
+    {lat:35.986136, lng:139.047551, name:"ぴか秩父（1泊目）", time:"8/7（金）17:30頃 到着", color:"#274734"},
+    {lat:35.9777452, lng:139.5113871, name:"スカイダイブ・ニッポン", time:"8/8（土）12:00 集合", color:"#1F5C8E"},
+    {lat:35.986136, lng:139.047551, name:"ぴか秩父（2泊目）", time:"8/8（土）15:00頃 帰着", color:"#274734"},
+    {lat:35.6161615, lng:139.5829996, name:"宿河原（返却）", time:"8/9（日）16:00 返却期限", color:"#B9631E"}
+  ];
+
+  var mapEl = document.getElementById('leaflet-map');
+  if(!mapEl || typeof L === 'undefined'){ return; }
+
+  var map = L.map(mapEl);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  var bounds = [];
+  stops.forEach(function(s, i){
+    var marker = L.circleMarker([s.lat, s.lng], {
+      radius: 8, color: '#FFFFFF', weight: 2, fillColor: s.color, fillOpacity: 0.95
+    }).addTo(map);
+    marker.bindPopup('<b>' + (i + 1) + '. ' + s.name + '</b><br>' + s.time);
+    bounds.push([s.lat, s.lng]);
+  });
+  map.fitBounds(bounds, {padding: [28, 28]});
+
+  var coordsStr = stops.map(function(s){ return s.lng + ',' + s.lat; }).join(';');
+  fetch('https://router.project-osrm.org/route/v1/driving/' + coordsStr + '?overview=full&geometries=geojson')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data && data.routes && data.routes[0]){
+        var coords = data.routes[0].geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+        L.polyline(coords, {color:'#4A8FC4', weight:4, opacity:0.85}).addTo(map);
+      } else {
+        throw new Error('no route');
+      }
+    })
+    .catch(function(){
+      var straight = stops.map(function(s){ return [s.lat, s.lng]; });
+      L.polyline(straight, {color:'#4A8FC4', weight:3, opacity:0.7, dashArray:'6 6'}).addTo(map);
+    });
+})();
+</script>
+</body>
+</html>
